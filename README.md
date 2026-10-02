@@ -34,6 +34,11 @@ O cliente é reconhecido pelo telefone. O celular dele lembra o nome e as últim
   - preço fixo por rota.
 - **Ajustes:** dados do motorista, WhatsApp, veículo, chave Pix, nome exibido e antecedência mínima.
 
+### Princípio: preço fixo, sem surpresa
+Diferente de Uber e 99, o Gui **não tem tarifa dinâmica** e **não tem taxa variável**:
+- **Para o cliente:** o valor é definido pelo motorista e não muda com horário, chuva ou demanda. O cliente vê o valor antes de reservar.
+- **Para o motorista (fase 2):** quando entrarem outros motoristas, a cobrança da plataforma será fixa e conhecida de antemão (ex.: mensalidade ou percentual fixo), nunca variável por corrida. Na fase 1 não há taxa nenhuma: o Pix vai direto para o Gui.
+
 ### Como o preço é calculado
 Sem tarifa dinâmica. Para o mesmo pedido, o valor é sempre o mesmo (`src/lib/pricing.ts`). A regra usada é a primeira que se aplica:
 1. **Rota fixa:** os dois locais estão cadastrados como frequentes e há preço para essa rota.
