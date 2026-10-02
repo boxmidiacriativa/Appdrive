@@ -1,6 +1,7 @@
 "use client";
 
 import { useActionState } from "react";
+import { Logo } from "@/components/brand";
 import { signIn } from "../actions";
 import { Button, Card, Input, Label } from "@/components/ui";
 
@@ -9,8 +10,8 @@ export default function LoginPage() {
 
   return (
     <main className="mx-auto flex w-full max-w-sm flex-1 flex-col justify-center px-4 py-12">
-      <p className="text-sm font-semibold uppercase tracking-[0.14em] text-accent">Painel do motorista</p>
-      <h1 className="mt-2 text-2xl font-bold">Entrar</h1>
+      <Logo tagline="Painel do motorista" />
+      <h1 className="mt-8 text-2xl font-bold">Entrar</h1>
       <Card className="mt-6 p-5">
         <form action={action} className="space-y-4">
           <div>

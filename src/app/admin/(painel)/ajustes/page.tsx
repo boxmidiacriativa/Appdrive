@@ -88,11 +88,11 @@ export default async function AjustesPage(props: PageProps<"/admin/ajustes">) {
           <h2 className="text-lg font-bold">Página de reservas</h2>
           <form action={updateSettings} className="mt-4 space-y-4">
             <div>
-              <Label htmlFor="business_name">Nome exibido</Label>
+              <Label htmlFor="business_name">Nome da marca</Label>
               <Input id="business_name" name="business_name" defaultValue={settings.business_name} required />
             </div>
             <div>
-              <Label htmlFor="tagline">Frase de apresentação</Label>
+              <Label htmlFor="tagline">Assinatura (abaixo do nome)</Label>
               <Input id="tagline" name="tagline" defaultValue={settings.tagline} />
             </div>
             <div>

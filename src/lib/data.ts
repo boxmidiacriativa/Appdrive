@@ -1,4 +1,5 @@
 import "server-only";
+import { BRAND } from "./brand";
 import { createServiceClient } from "./supabase/service";
 import { toNumber, type Driver, type Place, type PublicService, type RoutePriceRow, type Service, type Settings } from "./types";
 
@@ -6,8 +7,8 @@ import { toNumber, type Driver, type Place, type PublicService, type RoutePriceR
 // Rodam só no servidor; o navegador recebe apenas os campos necessários.
 
 const DEFAULT_SETTINGS: Settings = {
-  business_name: "Motorista Gui",
-  tagline: "Seu motorista particular, com hora marcada.",
+  business_name: BRAND.name,
+  tagline: BRAND.tagline,
   min_advance_hours: 2,
 };
 

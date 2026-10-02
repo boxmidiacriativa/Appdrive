@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import QRCode from "qrcode";
+import { Logo } from "@/components/brand";
 import { AutoRefresh } from "@/components/auto-refresh";
 import { CopyButton } from "@/components/copy-button";
 import { IconCalendar, IconCar, IconCheck, IconClock, IconFlag, IconHourglass, IconPin, IconUsers } from "@/components/icons";
@@ -43,8 +44,8 @@ export default async function BookingPage(props: PageProps<"/reserva/[token]">) 
       />
       {booking.status === "requested" && <AutoRefresh seconds={20} />}
 
-      <Link href="/" className="text-sm font-semibold uppercase tracking-[0.14em] text-accent">
-        {settings.business_name}
+      <Link href="/" aria-label="Início">
+        <Logo name={settings.business_name} tagline={settings.tagline} size="sm" />
       </Link>
 
       <StatusHero booking={booking} driverName={driverName} />
@@ -122,7 +123,7 @@ export default async function BookingPage(props: PageProps<"/reserva/[token]">) 
         <WhatsAppButton href={contactLink}>Falar pelo WhatsApp</WhatsAppButton>
         {(booking.status === "completed" || booking.status === "cancelled") && (
           <Link href="/" className={buttonClass("secondary", true)}>
-            Fazer nova reserva
+            Reservar de novo
           </Link>
         )}
       </div>
@@ -146,7 +147,7 @@ function StatusHero({ booking, driverName }: { booking: PublicBooking; driverNam
     completed: {
       tone: "bg-slate-soft text-ink-soft",
       title: "Viagem concluída",
-      text: "Obrigado por viajar com a gente. Quando precisar, é só reservar de novo.",
+      text: "Obrigado por ir de Gui. Quando precisar, é só reservar de novo.",
     },
     cancelled: {
       tone: "bg-danger-soft text-danger",

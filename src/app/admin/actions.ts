@@ -206,7 +206,7 @@ export async function updateSettings(form: FormData) {
   const { error } = await supabase
     .from("settings")
     .update({
-      business_name: text(form, "business_name", 60) ?? "Motorista Gui",
+      business_name: text(form, "business_name", 60) ?? "Gui",
       tagline: text(form, "tagline", 120) ?? "",
       min_advance_hours: minAdvance,
     })
