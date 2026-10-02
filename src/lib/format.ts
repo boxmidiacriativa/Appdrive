@@ -76,3 +76,12 @@ export function formatHours(hours: number | null | undefined): string {
   const h = Number(hours);
   return `${h.toLocaleString("pt-BR")} ${h === 1 ? "hora" : "horas"}`;
 }
+
+// Valor digitado pelo Gui: aceita "150", "150,50", "1.250,00", "R$ 1250.00"
+export function parseMoney(raw: FormDataEntryValue | null | undefined): number | null {
+  const value = String(raw ?? "").trim().replace(/[R$\s]/g, "");
+  if (!value) return null;
+  const normalized = value.includes(",") ? value.replace(/\./g, "").replace(",", ".") : value;
+  const n = Number(normalized);
+  return Number.isFinite(n) && n >= 0 ? Math.round(n * 100) / 100 : null;
+}

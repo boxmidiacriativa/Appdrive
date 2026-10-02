@@ -19,3 +19,17 @@ describe("format", () => {
     expect(end.toISOString()).toBe("2026-10-12T03:00:00.000Z");
   });
 });
+
+import { parseMoney } from "../format";
+
+describe("parseMoney", () => {
+  it("entende valores no formato brasileiro", () => {
+    expect(parseMoney("150")).toBe(150);
+    expect(parseMoney("150,50")).toBe(150.5);
+    expect(parseMoney("1.250,00")).toBe(1250);
+    expect(parseMoney("R$ 1250.00")).toBe(1250);
+    expect(parseMoney("")).toBeNull();
+    expect(parseMoney("abc")).toBeNull();
+    expect(parseMoney("-5")).toBeNull();
+  });
+});
