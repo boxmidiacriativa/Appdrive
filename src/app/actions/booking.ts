@@ -1,7 +1,7 @@
 "use server";
 
-import { randomBytes, randomInt } from "node:crypto";
 import { z } from "zod";
+import { newAccessToken, newBookingCode } from "@/lib/booking-ids";
 import { getSettings, normalizeRoutePrice, normalizeService } from "@/lib/data";
 import { formatLongDate, formatTime, isValidBrPhone, normalizePhone, toPickupAt } from "@/lib/format";
 import { estimateRoute } from "@/lib/maps";
@@ -136,11 +136,6 @@ export async function quoteBooking(input: TripInput): Promise<QuoteResult> {
   }
 }
 
-const CODE_ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
-function newCode() {
-  return Array.from({ length: 6 }, () => CODE_ALPHABET[randomInt(CODE_ALPHABET.length)]).join("");
-}
-
 export async function createBooking(tripInput: TripInput, contactInput: ContactInput): Promise<CreateResult> {
   try {
     const contact = contactSchema.safeParse(contactInput);
@@ -176,14 +171,14 @@ export async function createBooking(tripInput: TripInput, contactInput: ContactI
     }
 
     const { data: driver } = await db.from("drivers").select("id").eq("is_default", true).maybeSingle();
-    const accessToken = randomBytes(24).toString("base64url");
+    const accessToken = newAccessToken();
 
     let booking: { code: string; access_token: string } | null = null;
     for (let attempt = 0; attempt < 5 && !booking; attempt++) {
       const { data, error } = await db
         .from("bookings")
         .insert({
-          code: newCode(),
+          code: newBookingCode(),
           access_token: accessToken,
           customer_id: customerId,
           driver_id: driver?.id ?? null,

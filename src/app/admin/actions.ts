@@ -3,7 +3,10 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { requireAdmin } from "@/lib/auth";
-import { normalizePhone, parseMoney } from "@/lib/format";
+import { newAccessToken, newBookingCode } from "@/lib/booking-ids";
+import { normalizeRoutePrice, normalizeService } from "@/lib/data";
+import { isValidBrPhone, normalizePhone, parseMoney, toPickupAt } from "@/lib/format";
+import { calculatePrice } from "@/lib/pricing";
 import type { BookingStatus } from "@/lib/types";
 import { createSessionClient } from "@/lib/supabase/server";
 
@@ -238,4 +241,108 @@ export async function updateDriver(id: string, form: FormData) {
   if (error) fail("Não foi possível salvar o motorista.");
   revalidatePath("/", "layout");
   redirect("/admin/ajustes?ok=motorista");
+}
+
+// ------------------------------------------------------------------ Nova reserva (pelo Gui)
+
+export type NewBookingState = { error?: string } | undefined;
+
+// O Gui registra uma reserva combinada por WhatsApp ou telefone, para ela entrar
+// na agenda, no histórico do cliente e gerar o link com o Pix.
+export async function createBookingByAdmin(_prev: NewBookingState, form: FormData): Promise<NewBookingState> {
+  const { supabase } = await requireAdmin();
+
+  const name = text(form, "name", 80);
+  const phoneRaw = text(form, "phone", 30);
+  const serviceId = text(form, "service_id", 40);
+  const origin = text(form, "origin", 200);
+  const destination = text(form, "destination", 200);
+  const date = String(form.get("date") ?? "");
+  const time = String(form.get("time") ?? "");
+  const passengers = Math.round(Number(form.get("passengers") ?? 1));
+  const hours = parseMoney(form.get("hours"));
+  const typedPrice = parseMoney(form.get("final_price"));
+  const confirmed = form.get("confirmed") === "on";
+
+  if (!name || !phoneRaw || !isValidBrPhone(phoneRaw)) return { error: "Informe nome e um WhatsApp válido com DDD." };
+  if (!serviceId || !origin) return { error: "Informe o serviço e o local de origem." };
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(date) || !/^\d{2}:\d{2}$/.test(time)) return { error: "Informe data e horário." };
+  if (!Number.isFinite(passengers) || passengers < 1 || passengers > 50) return { error: "Número de passageiros inválido." };
+
+  const { data: serviceRow } = await supabase.from("services").select("*").eq("id", serviceId).maybeSingle();
+  if (!serviceRow) return { error: "Serviço não encontrado." };
+  const service = normalizeService(serviceRow);
+  if (service.billing === "trip" && !destination) return { error: "Informe o destino." };
+  if (service.billing === "hourly" && !hours) return { error: "Informe por quantas horas." };
+
+  // Sem valor digitado, usa a mesma regra de preço do app (rota fixa ou por hora)
+  let estimated: number | null = null;
+  let source: "route" | "distance" | "hourly" | "none" = "none";
+  if (typedPrice === null) {
+    const [{ data: places }, { data: routes }] = await Promise.all([
+      supabase.from("places").select("id, name").eq("active", true),
+      supabase.from("route_prices").select("*").eq("active", true),
+    ]);
+    const placeId = (label: string | null) =>
+      label ? (places?.find((p) => p.name.toLowerCase() === label.toLowerCase())?.id ?? null) : null;
+    const result = calculatePrice({
+      service,
+      originPlaceId: placeId(origin),
+      destinationPlaceId: placeId(destination),
+      hours,
+      routePrices: (routes ?? []).map(normalizeRoutePrice),
+    });
+    estimated = result.price;
+    source = result.source;
+  }
+
+  const phone = normalizePhone(phoneRaw);
+  const email = text(form, "email", 120);
+  const { data: existing } = await supabase.from("customers").select("id, email").eq("phone", phone).maybeSingle();
+  let customerId = existing?.id as string | undefined;
+  if (existing) {
+    await supabase.from("customers").update({ name, email: email ?? existing.email }).eq("id", existing.id);
+  } else {
+    const { data: created, error } = await supabase.from("customers").insert({ name, phone, email }).select("id").single();
+    if (error || !created) return { error: "Não foi possível salvar o cliente." };
+    customerId = created.id;
+  }
+
+  const { data: driver } = await supabase.from("drivers").select("id").eq("is_default", true).maybeSingle();
+  const now = new Date().toISOString();
+  let bookingId: string | null = null;
+  for (let attempt = 0; attempt < 5 && !bookingId; attempt++) {
+    const { data, error } = await supabase
+      .from("bookings")
+      .insert({
+        code: newBookingCode(),
+        access_token: newAccessToken(),
+        customer_id: customerId,
+        driver_id: driver?.id ?? null,
+        service_id: service.id,
+        service_name: service.name,
+        service_billing: service.billing,
+        origin,
+        destination,
+        pickup_at: toPickupAt(date, time).toISOString(),
+        hours: service.billing === "hourly" ? hours : null,
+        passengers,
+        notes: text(form, "notes"),
+        estimated_price: estimated,
+        price_source: source,
+        final_price: typedPrice,
+        driver_message: text(form, "driver_message"),
+        status: confirmed ? "confirmed" : "requested",
+        confirmed_at: confirmed ? now : null,
+      })
+      .select("id")
+      .single();
+    if (data) bookingId = data.id;
+    else if (error?.code !== "23505") return { error: "Não foi possível criar a reserva." };
+  }
+  if (!bookingId) return { error: "Não foi possível criar a reserva." };
+
+  revalidatePath("/admin");
+  revalidatePath("/admin/reservas");
+  redirect(`/admin/reservas/${bookingId}?ok=criada`);
 }

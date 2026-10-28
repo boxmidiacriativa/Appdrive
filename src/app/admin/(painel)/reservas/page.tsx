@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { BookingCard } from "@/components/admin/booking-card";
-import { cx, EmptyState } from "@/components/ui";
+import { buttonClass, cx, EmptyState } from "@/components/ui";
 import { listBookings } from "@/lib/admin-data";
 import { STATUS_LABEL, type BookingStatus } from "@/lib/types";
 
@@ -18,7 +18,12 @@ export default async function ReservasPage(props: PageProps<"/admin/reservas">) 
 
   return (
     <div className="space-y-5">
-      <h1 className="text-2xl font-bold">Reservas</h1>
+      <div className="flex items-end justify-between gap-3">
+        <h1 className="text-2xl font-bold">Reservas</h1>
+        <Link href="/admin/reservas/nova" className={buttonClass("primary")}>
+          + Nova reserva
+        </Link>
+      </div>
 
       <div className="grid grid-cols-2 rounded-xl bg-slate-soft p-1 text-sm font-semibold">
         {(["proximas", "anteriores"] as const).map((p) => (

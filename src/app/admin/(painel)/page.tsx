@@ -1,5 +1,6 @@
 import { BookingCard } from "@/components/admin/booking-card";
-import { EmptyState } from "@/components/ui";
+import Link from "next/link";
+import { buttonClass, EmptyState } from "@/components/ui";
 import { getDashboard } from "@/lib/admin-data";
 import { formatLongDate, localDateKey } from "@/lib/format";
 import type { BookingWithCustomer } from "@/lib/types";
@@ -18,9 +19,14 @@ export default async function AdminHome() {
 
   return (
     <div className="space-y-8">
-      <header>
-        <p className="text-sm font-medium text-muted first-letter:uppercase">{formatLongDate(new Date())}</p>
-        <h1 className="text-2xl font-bold">Hoje</h1>
+      <header className="flex items-end justify-between gap-3">
+        <div>
+          <p className="text-sm font-medium text-muted first-letter:uppercase">{formatLongDate(new Date())}</p>
+          <h1 className="text-2xl font-bold">Hoje</h1>
+        </div>
+        <Link href="/admin/reservas/nova" className={buttonClass("primary")}>
+          + Nova reserva
+        </Link>
       </header>
 
       {pending.length > 0 && (

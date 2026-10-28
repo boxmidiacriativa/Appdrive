@@ -24,6 +24,7 @@ const SOURCE_LABEL = {
 
 const OK_MESSAGES: Record<string, string> = {
   confirmada: "Reserva confirmada. Agora avise o cliente pelo WhatsApp.",
+  criada: "Reserva registrada. Envie o link ao cliente pelo WhatsApp.",
   salvo: "Alterações salvas.",
   status: "Status atualizado.",
 };
